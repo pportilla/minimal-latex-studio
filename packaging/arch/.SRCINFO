@@ -21,6 +21,6 @@ pkgbase = minimal-latex-studio
 	optdepends = texlive-latexextra: commonly used LaTeX packages
 	optdepends = texlive-fontsextra: additional fonts for LaTeX documents
 	source = minimal-latex-studio-0.1.0.tar.gz::https://github.com/pportilla/minimal-latex-studio/releases/download/v0.1.0/minimal-latex-studio-0.1.0.tar.gz
-	sha256sums = SKIP
+	sha256sums = cfd92016c2029def08edfbd214e677855abfedb53a868361a0d7180cf4660903
 
 pkgname = minimal-latex-studio

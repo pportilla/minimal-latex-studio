@@ -36,7 +36,7 @@ source=(
   "$pkgname-$pkgver.tar.gz::$url/releases/download/v$pkgver/$pkgname-$pkgver.tar.gz"
 )
 sha256sums=(
-  'SKIP'
+  'cfd92016c2029def08edfbd214e677855abfedb53a868361a0d7180cf4660903'
 )
 
 build() {

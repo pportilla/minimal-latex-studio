@@ -52,7 +52,9 @@ repository.
 
 ## Clean Chroot Check
 
-Install Arch devtools and build in a clean chroot before any AUR submission:
+Install Arch devtools and build in a clean chroot before any AUR submission.
+Run this on an Arch Linux system or Arch VM/container. Do not mix Arch package
+repositories into Manjaro or another derivative just to install `devtools`.
 
 ```bash
 sudo pacman -S --needed devtools

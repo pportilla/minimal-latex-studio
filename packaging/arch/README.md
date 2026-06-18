@@ -13,7 +13,9 @@ runtimes, or native npm module rebuilds.
 - Run `makepkg --printsrcinfo > .SRCINFO` after every `PKGBUILD` change.
 - Keep `REUSE.toml` and `LICENSES/0BSD.txt` with the package source files.
 - Run `makepkg -Csr` and `namcap` in a clean Arch chroot before submitting to the AUR.
-- Run `extra-x86_64-build` from `devtools` before asking an Arch maintainer to review it.
+- Run `extra-x86_64-build` from `devtools` on Arch Linux before asking an Arch
+  maintainer to review it. Manjaro is fine for local development, but not for
+  official Arch clean-chroot validation.
 - For official repository consideration, keep the AUR package healthy and wait for
   an Arch package maintainer to adopt or request it. Upstream projects cannot
   directly submit packages to the official repositories.

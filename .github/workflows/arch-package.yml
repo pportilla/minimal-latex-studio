@@ -45,7 +45,7 @@ jobs:
           cp packaging/arch/PKGBUILD /tmp/pkg/PKGBUILD
           checksum="$(sha256sum /tmp/pkg/minimal-latex-studio-0.1.0.tar.gz | awk '{print $1}')"
           sed -i 's#"$pkgname-$pkgver.tar.gz::.*#"$pkgname-$pkgver.tar.gz"#' /tmp/pkg/PKGBUILD
-          sed -i "s/'SKIP'/'$checksum'/" /tmp/pkg/PKGBUILD
+          sed -i -E "s#'(SKIP|[0-9a-fA-F]{64})'#'$checksum'#" /tmp/pkg/PKGBUILD
           useradd -m builder
           chown -R builder:builder /tmp/pkg
           cd /tmp/pkg

@@ -11,7 +11,7 @@ LiTeX is a stripped-down native LaTeX editor inspired by TeXstudio. It includes:
 - Resizable editor/PDF split, hideable PDF preview, and resizable lower panel
 - Source file watching with reload-from-disk prompts for external edits
 - Click-to-clean auxiliary LaTeX files
-- JSON-backed themes with a small Options dialog for theme, font size, line wrap, sidebar visibility, and PDF visibility
+- JSON-backed themes with a small Options dialog for theme, font size, smart line wrap, column guide, sidebar visibility, and PDF visibility
 
 ## Requirements
 

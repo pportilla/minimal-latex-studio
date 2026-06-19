@@ -57,6 +57,7 @@
 #include <QTextCursor>
 #include <QTextFormat>
 #include <QTextLayout>
+#include <QTextOption>
 #include <QTextStream>
 #include <QTimer>
 #include <QToolButton>
@@ -79,6 +80,9 @@ constexpr int kDefaultEditorFontSize = 12;
 constexpr int kDefaultTerminalFontSize = 12;
 constexpr int kMinTextFontSize = 8;
 constexpr int kMaxTextFontSize = 28;
+constexpr int kDefaultColumnGuide = 80;
+constexpr int kMinColumnGuide = 20;
+constexpr int kMaxColumnGuide = 240;
 
 QString cssColor(const QColor& color)
 {
@@ -632,6 +636,7 @@ class SourceEditor final : public QPlainTextEdit
         setFrameShape(QFrame::NoFrame);
         setTabStopDistance(QFontMetricsF(font()).horizontalAdvance(' ') * 2.0);
         setLineWrapMode(QPlainTextEdit::NoWrap);
+        setWordWrapMode(QTextOption::WordWrap);
 
         connect(
             this, &QPlainTextEdit::blockCountChanged, this, &SourceEditor::updateLineNumberAreaWidth
@@ -708,7 +713,11 @@ class SourceEditor final : public QPlainTextEdit
         setPalette(palette);
 
         highlighter_->applyTheme(theme);
+        columnGuideColor_ = QColor(
+            theme.accent.red(), theme.accent.green(), theme.accent.blue(), 84
+        );
         lineNumberArea_->update();
+        viewport()->update();
     }
 
     void setEditorFontSize(int size)
@@ -720,6 +729,7 @@ class SourceEditor final : public QPlainTextEdit
         setTabStopDistance(QFontMetricsF(font()).horizontalAdvance(' ') * 2.0);
         updateLineNumberAreaWidth();
         lineNumberArea_->update();
+        viewport()->update();
     }
 
     int editorFontSize() const
@@ -730,6 +740,34 @@ class SourceEditor final : public QPlainTextEdit
     void setForwardSearchCallback(std::function<void(int, int)> callback)
     {
         forwardSearchCallback_ = std::move(callback);
+    }
+
+    void setSmartLineWrapEnabled(bool enabled)
+    {
+        setLineWrapMode(enabled ? QPlainTextEdit::WidgetWidth : QPlainTextEdit::NoWrap);
+        setWordWrapMode(QTextOption::WordWrap);
+    }
+
+    bool smartLineWrapEnabled() const
+    {
+        return lineWrapMode() == QPlainTextEdit::WidgetWidth;
+    }
+
+    void setColumnGuide(bool visible, int column)
+    {
+        columnGuideVisible_ = visible;
+        columnGuideColumn_ = std::clamp(column, kMinColumnGuide, kMaxColumnGuide);
+        viewport()->update();
+    }
+
+    bool columnGuideVisible() const
+    {
+        return columnGuideVisible_;
+    }
+
+    int columnGuideColumn() const
+    {
+        return columnGuideColumn_;
     }
 
     void jumpToLineColumn(int line, int column)
@@ -826,6 +864,12 @@ class SourceEditor final : public QPlainTextEdit
         );
     }
 
+    void paintEvent(QPaintEvent* event) override
+    {
+        QPlainTextEdit::paintEvent(event);
+        paintColumnGuide();
+    }
+
   private:
     struct FoldRange
     {
@@ -858,6 +902,10 @@ class SourceEditor final : public QPlainTextEdit
 
         if (rect.contains(viewport()->rect())) {
             updateLineNumberAreaWidth();
+        }
+
+        if (columnGuideVisible_) {
+            viewport()->update();
         }
     }
 
@@ -900,6 +948,28 @@ class SourceEditor final : public QPlainTextEdit
             );
         }
         painter.restore();
+    }
+
+    void paintColumnGuide()
+    {
+        if (!columnGuideVisible_ || columnGuideColumn_ <= 0) {
+            return;
+        }
+
+        const qreal characterWidth = QFontMetricsF(font()).horizontalAdvance(QLatin1Char(' '));
+        if (characterWidth <= 0.0) {
+            return;
+        }
+
+        const int x =
+            static_cast<int>(std::round(contentOffset().x() + characterWidth * columnGuideColumn_));
+        if (x < 0 || x > viewport()->width()) {
+            return;
+        }
+
+        QPainter painter(viewport());
+        painter.setPen(QPen(columnGuideColor_, 1));
+        painter.drawLine(QPoint(x, 0), QPoint(x, viewport()->height()));
     }
 
     int visibleBlockNumberAtY(int y) const
@@ -1075,6 +1145,9 @@ class SourceEditor final : public QPlainTextEdit
     QColor gutterBackground_ = QColor("#edf1ec");
     QColor gutterText_ = QColor("#7a857e");
     QColor currentLine_ = QColor(0, 0, 0, 12);
+    QColor columnGuideColor_ = QColor(31, 122, 109, 84);
+    bool columnGuideVisible_ = true;
+    int columnGuideColumn_ = kDefaultColumnGuide;
 };
 
 LineNumberArea::LineNumberArea(SourceEditor* editor) : QWidget(editor), editor_(editor) {}
@@ -1520,11 +1593,11 @@ class MainWindow final : public QMainWindow
 
         root->addWidget(createTopBar());
 
-        verticalSplitter_ = new QSplitter(Qt::Vertical, central);
-        topSplitter_ = new QSplitter(Qt::Horizontal, verticalSplitter_);
+        topSplitter_ = new QSplitter(Qt::Horizontal, central);
+        verticalSplitter_ = new QSplitter(Qt::Vertical, topSplitter_);
 
         sidebar_ = createSidebar();
-        editor_ = new SourceEditor(topSplitter_);
+        editor_ = new SourceEditor(verticalSplitter_);
         pdfPreview_ = new PdfPreview(topSplitter_);
         editor_->setForwardSearchCallback([this](int line, int column) {
             forwardSyncToPdf(line, column);
@@ -1532,14 +1605,6 @@ class MainWindow final : public QMainWindow
         pdfPreview_->setInverseSearchCallback([this](int page, double x, double y) {
             inverseSyncToEditor(page, x, y);
         });
-
-        topSplitter_->addWidget(sidebar_);
-        topSplitter_->addWidget(editor_);
-        topSplitter_->addWidget(pdfPreview_);
-        topSplitter_->setCollapsible(0, true);
-        topSplitter_->setCollapsible(1, false);
-        topSplitter_->setCollapsible(2, true);
-        topSplitter_->setSizes({220, 660, 500});
 
         bottomTabs_ = new QTabWidget(verticalSplitter_);
         buildLog_ = new QPlainTextEdit(bottomTabs_);
@@ -1552,13 +1617,21 @@ class MainWindow final : public QMainWindow
         terminalLayout->setContentsMargins(0, 0, 0, 0);
         bottomTabs_->addTab(terminalHost_, "Terminal");
 
-        verticalSplitter_->addWidget(topSplitter_);
+        verticalSplitter_->addWidget(editor_);
         verticalSplitter_->addWidget(bottomTabs_);
         verticalSplitter_->setCollapsible(0, false);
         verticalSplitter_->setCollapsible(1, true);
         verticalSplitter_->setSizes({640, 220});
 
-        root->addWidget(verticalSplitter_, 1);
+        topSplitter_->addWidget(sidebar_);
+        topSplitter_->addWidget(verticalSplitter_);
+        topSplitter_->addWidget(pdfPreview_);
+        topSplitter_->setCollapsible(0, true);
+        topSplitter_->setCollapsible(1, false);
+        topSplitter_->setCollapsible(2, true);
+        topSplitter_->setSizes({220, 660, 500});
+
+        root->addWidget(topSplitter_, 1);
         setCentralWidget(central);
 
         connect(editor_, &QPlainTextEdit::modificationChanged, this, [this] { updateTitle(); });
@@ -2060,9 +2133,13 @@ class MainWindow final : public QMainWindow
             kMaxTextFontSize
         );
         applyEditorFontSize(editorFontSize_, false);
-        editor_->setLineWrapMode(
-            settings_.value("lineWrap", false).toBool() ? QPlainTextEdit::WidgetWidth
-                                                        : QPlainTextEdit::NoWrap
+        editor_->setSmartLineWrapEnabled(settings_.value("lineWrap", false).toBool());
+        editor_->setColumnGuide(
+            settings_.value("showColumnGuide", true).toBool(),
+            std::clamp(
+                settings_.value("columnGuide", kDefaultColumnGuide).toInt(), kMinColumnGuide,
+                kMaxColumnGuide
+            )
         );
 
         const QString mode = settings_.value("buildMode", "auto").toString();
@@ -2088,7 +2165,9 @@ class MainWindow final : public QMainWindow
         settings_.setValue("showPdf", pdfPreview_->isVisible());
         settings_.setValue("autoReloadPdf", autoReloadPdf_);
         settings_.setValue("autoReloadSource", autoReloadSource_);
-        settings_.setValue("lineWrap", editor_->lineWrapMode() == QPlainTextEdit::WidgetWidth);
+        settings_.setValue("lineWrap", editor_->smartLineWrapEnabled());
+        settings_.setValue("showColumnGuide", editor_->columnGuideVisible());
+        settings_.setValue("columnGuide", editor_->columnGuideColumn());
         settings_.setValue("geometry", saveGeometry());
         settings_.setValue("splitters/top", topSplitter_->saveState());
         settings_.setValue("splitters/vertical", verticalSplitter_->saveState());
@@ -2952,7 +3031,15 @@ class MainWindow final : public QMainWindow
         terminalFontSize->setValue(terminalFontSize_);
 
         auto* lineWrap = new QCheckBox(&dialog);
-        lineWrap->setChecked(editor_->lineWrapMode() == QPlainTextEdit::WidgetWidth);
+        lineWrap->setChecked(editor_->smartLineWrapEnabled());
+
+        auto* columnGuide = new QCheckBox(&dialog);
+        columnGuide->setChecked(editor_->columnGuideVisible());
+
+        auto* columnGuidePosition = new QSpinBox(&dialog);
+        columnGuidePosition->setRange(kMinColumnGuide, kMaxColumnGuide);
+        columnGuidePosition->setValue(editor_->columnGuideColumn());
+        columnGuidePosition->setEnabled(columnGuide->isChecked());
 
         auto* showSidebar = new QCheckBox(&dialog);
         showSidebar->setChecked(sidebar_->isVisible());
@@ -2976,7 +3063,9 @@ class MainWindow final : public QMainWindow
 
         form->addRow("Editor size", fontSize);
         form->addRow("Terminal size", terminalFontSize);
-        form->addRow("Line wrap", lineWrap);
+        form->addRow("Smart line wrap", lineWrap);
+        form->addRow("Column guide", columnGuide);
+        form->addRow("Guide column", columnGuidePosition);
         form->addRow("Project panel", showSidebar);
         form->addRow("PDF preview", showPdf);
         form->addRow("Auto reload source", autoReloadSource);
@@ -3001,6 +3090,7 @@ class MainWindow final : public QMainWindow
         });
         connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
         connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        connect(columnGuide, &QCheckBox::toggled, columnGuidePosition, &QSpinBox::setEnabled);
 
         if (dialog.exec() != QDialog::Accepted) {
             return;
@@ -3009,15 +3099,16 @@ class MainWindow final : public QMainWindow
         settings_.setValue("editorFontSize", fontSize->value());
         settings_.setValue("terminalFontSize", terminalFontSize->value());
         settings_.setValue("lineWrap", lineWrap->isChecked());
+        settings_.setValue("showColumnGuide", columnGuide->isChecked());
+        settings_.setValue("columnGuide", columnGuidePosition->value());
         autoReloadPdf_ = autoReloadPdf->isChecked();
         autoReloadSource_ = autoReloadSource->isChecked();
         themePath_ = themePath->text().trimmed();
 
         applyEditorFontSize(fontSize->value(), false);
         applyTerminalFontSize(terminalFontSize->value(), false);
-        editor_->setLineWrapMode(
-            lineWrap->isChecked() ? QPlainTextEdit::WidgetWidth : QPlainTextEdit::NoWrap
-        );
+        editor_->setSmartLineWrapEnabled(lineWrap->isChecked());
+        editor_->setColumnGuide(columnGuide->isChecked(), columnGuidePosition->value());
         setSidebarVisible(showSidebar->isChecked());
         setPdfVisible(showPdf->isChecked());
 

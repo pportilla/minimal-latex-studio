@@ -9,8 +9,7 @@ preview, SyncTeX source/PDF navigation, and embedded QTermWidget terminal.
 
 ## Why It Fits Arch
 
-- Native C++/Qt application; no Electron, Node.js, npm, vendored browser runtime,
-  or bundled binary dependencies.
+- Native C++/Qt application with no bundled binary dependencies.
 - Uses existing Arch packages: `qt6-base`, `poppler-qt6`, `qtermwidget`,
   `hicolor-icon-theme`, `gcc-libs`, and `glibc`.
 - TeX tools are detected at runtime and kept as optional dependencies.

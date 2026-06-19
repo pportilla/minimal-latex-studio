@@ -1,8 +1,7 @@
 # Arch/AUR Packaging Notes
 
-This directory prepares the project for an Arch package workflow. It is now a
-native Qt package and no longer uses Electron, Node.js, npm, bundled browser
-runtimes, or native npm module rebuilds.
+This directory prepares the project for an Arch package workflow. The package
+builds the native Qt/CMake source tree directly.
 
 ## Before Publishing
 

@@ -1,7 +1,7 @@
 # Packaging Checklist
 
-This project is structured so the upstream source tree can be packaged without
-Electron, bundled runtimes, generated assets, or network access during build.
+This project is structured so the upstream source tree can be packaged from
+native Qt/CMake sources without generated assets or network access during build.
 
 ## Release Requirements
 

@@ -1,8 +1,5 @@
-node_modules/
-dist/
 dist-release/
 dist-aur/
-.vite/
 build*/
 *.pkg.tar.*
 *.src.tar.*

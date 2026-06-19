@@ -8,8 +8,8 @@ native Qt/CMake sources without generated assets or network access during build.
 - Publish the upstream source in a real public repository.
 - Create a `v0.1.0` release tag from a clean source tree.
 - Prefer a signed tag or detached source signature for future releases.
-- Keep the Arch package sources in `packaging/arch` under the explicit 0BSD
-  package-source license metadata (`REUSE.toml` and `LICENSES/0BSD.txt`).
+- Keep the Arch package sources in `packaging/arch` under the explicit MIT
+  package-source license metadata (`REUSE.toml` and `LICENSES/MIT.txt`).
 - Run `scripts/prepare-release.sh` from the tagged upstream tree. It creates
   `dist-release/minimal-latex-studio-0.1.0.tar.gz`, updates the PKGBUILD
   checksum, and regenerates `.SRCINFO`.
@@ -47,7 +47,7 @@ scripts/export-aur.sh
 ```
 
 The export includes `PKGBUILD`, `.SRCINFO`, `.nvchecker.toml`, `README.md`, and
-package-source license metadata. Commit those files in the AUR package
+MIT package-source license metadata. Commit those files in the AUR package
 repository.
 
 ## Clean Chroot Check

@@ -10,7 +10,7 @@ builds the native Qt/CMake source tree directly.
 - Run `scripts/prepare-release.sh` from the upstream repository.
 - Upload `dist-release/minimal-latex-studio-0.1.0.tar.gz` as the GitHub release asset.
 - Run `makepkg --printsrcinfo > .SRCINFO` after every `PKGBUILD` change.
-- Keep `REUSE.toml` and `LICENSES/0BSD.txt` with the package source files.
+- Keep `REUSE.toml` and `LICENSES/MIT.txt` with the package source files.
 - Run `makepkg -Csr` and `namcap` in a clean Arch chroot before submitting to the AUR.
 - Run `extra-x86_64-build` from `devtools` on Arch Linux before asking an Arch
   maintainer to review it. Manjaro is fine for local development, but not for

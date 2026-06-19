@@ -16,7 +16,7 @@ preview, SyncTeX source/PDF navigation, and embedded QTermWidget terminal.
 - CMake build has no network access and installs only expected files under
   `/usr/bin` and `/usr/share`.
 - Package includes `check()` validation for desktop and AppStream metadata.
-- Arch package sources are prepared with explicit 0BSD/REUSE metadata.
+- Arch package sources are prepared with explicit MIT/REUSE metadata.
 
 ## Validation Performed
 

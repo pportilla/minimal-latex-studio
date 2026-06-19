@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2026 Pablo Portilla
-# SPDX-License-Identifier: 0BSD
+# SPDX-License-Identifier: MIT
 # Maintainer: Pablo Portilla <pportilla@users.noreply.github.com>
 
 pkgname=minimal-latex-studio
@@ -8,7 +8,7 @@ pkgrel=1
 pkgdesc='Native minimal LaTeX editor, compiler, PDF previewer, and embedded terminal'
 arch=('x86_64')
 url='https://github.com/pportilla/minimal-latex-studio'
-license=('GPL-3.0-or-later')
+license=('MIT')
 depends=(
   'gcc-libs'
   'glibc'

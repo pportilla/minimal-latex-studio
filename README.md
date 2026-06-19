@@ -77,3 +77,7 @@ the JSON file from Options.
 - `Ctrl+Shift+]`: unfold all folded text
 - `Ctrl` + left click in the editor: jump to the matching PDF location
 - `Ctrl` + left click in the PDF preview: jump to the matching source line
+
+## License
+
+LiTeX is released under the MIT License. See `LICENSE` for details.
